@@ -1,28 +1,43 @@
-import httplib2
-import apiclient.discovery
-from oauth2client.service_account import ServiceAccountCredentials
-
-import gspread
 import pandas as pd
-from df2gspread import df2gspread as d2g
+import pygsheets
+import openpyxl
 
-credentials_file ='stable-woods-374912-3063b446a841.json'
-credentials = ServiceAccountCredentials.from_json_keyfile_name(credentials_file,
-['https://www.googleapis.com/auth/spreadsheets',
-'https://www.googleapis.com/auth/drive'])
-#httpAuth = credentials.authorize(httplib2.Http())
-#service = apiclient.discovery.build('sheets', 'v4', http=httpAuth)
-
-
-
-
-gc = gspread.authorize(credentials)
-
-spreadsheet_key = '1s9sQyX9j4rQKMiTErmjkc8r1pp-yxXA5ehMUOun9gpw'
-wks_name = 'Master'
+gc = pygsheets.authorize(service_file=r"C:\Users\user\Desktop\stable-woods-374912-6149e61555af.json")
 
 df = pd.read_excel(r"C:\Users\user\Desktop\Сервис.xlsx")
 
+sh = gc.open_by_url('https://docs.google.com/spreadsheets/d/14clInBRzbD8RzxUqg7aXv-u2eeQw_DrLHaoEn2J8GHc/edit#gid=931961663g')
 
+wks = sh[1]
 
-d2g.upload(df, spreadsheet_key, wks_name, credentials=credentials, row_names=True, col_names=True)
+df['Запчасть'] = df['Запчасть'].fillna('Ждем')
+
+wks.set_dataframe(df, (1, 1))
+
+color = {
+#"blue": 1,
+  "red": 2,
+  "green": 23,
+  "alpha": 1
+}
+
+wks2 = sh[1]
+
+wks2.add_conditional_formatting('N', 'N', 'NUMBER_GREATER_THAN_EQ', {'backgroundColor':{'red': 0.8}}, ['30'])
+
+wks2.add_conditional_formatting('N', 'N', 'NUMBER_BETWEEN', {'backgroundColor':
+{"red": 2, "green": 23, "alpha": 1}}, ['14', '30'])
+
+wks2.add_conditional_formatting('N', 'N', 'NUMBER_LESS_THAN_EQ', {'backgroundColor':
+{"green": 1, "alpha": 1}}, ['14'])
+
+wks2.adjust_column_width(start=1, end=1, pixel_size=30)
+#read = wks.get_as_df()
+
+#print(read)
+
+wks2.add_conditional_formatting('K', 'K', 'TEXT_EQ', {'backgroundColor':color}, ['Выдан'])
+
+header = wks2.cell('A1')
+header.set_text_format('bold', True)
+header.update()
